@@ -1,6 +1,9 @@
+import time
+
 import rx
 import os
 from rx import operators as ops
+from rx.subject import BehaviorSubject
 
 """
 This code will check modified date of a file every second and, 
@@ -22,6 +25,13 @@ def read_file_contents(file_path):
          print(line, end='')
 
 
+def intense_calculation(value):
+   # sleep for a random short duration between 0.5 to 2.0 seconds to simulate a long-running calculation
+   print("Sleeping for 10 seconds")
+   time.sleep(10)
+   return value
+
+
 # Every second
 file_check_interval_observable = rx.interval(1)
 
@@ -29,9 +39,20 @@ file_check_interval_observable = rx.interval(1)
 file_check_interval_observable.subscribe(print)
 
 #emit modified date every second, if the date has changed since last time.
+#use a connectable observable so that multiple downstreams
+#all use the same file polling.
 file_changed_observable = file_check_interval_observable.pipe(
+   ops.map(lambda i: intense_calculation(myinput_path)),
    ops.map(lambda i: get_modified_date(myinput_path)),
-   ops.distinct_until_changed()
+   ops.distinct_until_changed(),
+   #Without this each subscriber would create a new stream
+   #So we'd have one modification date check for the debug statement below
+   #and one for the debug, which is unnecessary.
+
+   #Replay ensures late subscribers
+   #will read the file.
+   ops.replay(buffer_size=1),
+   ops.ref_count()
 )
 
 #Debug subscription to show when modified date gets printed out.
@@ -41,8 +62,12 @@ file_changed_observable.subscribe(
    on_completed = lambda: print("Job Done!"),
 )
 
+#sleep 15 seconds, to test if a late subscriber will get an emission before a file change
+#(it should).
+time.sleep(15)
 #When a emission is produced upstream, read contents of the new file.
 file_changed_observable.subscribe(lambda ignore: read_file_contents(myinput_path))
+
 
 #Hang main execution so that rx async runs.
 input("press any key to exit")
