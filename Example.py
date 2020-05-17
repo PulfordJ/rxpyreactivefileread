@@ -26,7 +26,7 @@ def read_file_contents(file_path):
 
 
 def intense_calculation(value):
-   # sleep for a random short duration between 0.5 to 2.0 seconds to simulate a long-running calculation
+   # sleep for 10 seconds to simulate a long-running calculation so we can see how the code handles it.
    print("Sleeping for 10 seconds")
    time.sleep(10)
    return value
