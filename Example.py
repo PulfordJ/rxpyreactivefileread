@@ -25,9 +25,9 @@ def read_file_contents(file_path):
          print(line, end='')
 
 
-def intense_calculation(value):
+def intense_calculation(value, i):
    # sleep for 10 seconds to simulate a long-running calculation so we can see how the code handles it.
-   print("Sleeping for 10 seconds")
+   print("Sleeping for 10 seconds "+str(i))
    time.sleep(10)
    return value
 
@@ -42,7 +42,8 @@ file_check_interval_observable.subscribe(print)
 #use a connectable observable so that multiple downstreams
 #all use the same file polling.
 file_changed_observable = file_check_interval_observable.pipe(
-   ops.map(lambda i: intense_calculation(myinput_path)),
+   #Uncomment this to see what happens if file takes 10 seconds to load.
+   #ops.map(lambda i: intense_calculation(myinput_path, i)),
    ops.map(lambda i: get_modified_date(myinput_path)),
    ops.distinct_until_changed(),
    #Without this each subscriber would create a new stream
@@ -64,7 +65,8 @@ file_changed_observable.subscribe(
 
 #sleep 15 seconds, to test if a late subscriber will get an emission before a file change
 #(it should).
-time.sleep(15)
+#time.sleep(15)
+
 #When a emission is produced upstream, read contents of the new file.
 file_changed_observable.subscribe(lambda ignore: read_file_contents(myinput_path))
 
