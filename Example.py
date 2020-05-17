@@ -30,7 +30,9 @@ def getmodifieddate(file_path):
 
 print(getmodifieddate(myinput_path))
 
-rx.interval(1).subscribe_(print)
+file_check_interval_observable = rx.interval(1)
 
+file_check_interval_observable.subscribe_(print)
 
+file_changed_observable = file_check_interval_observable.subscribe_(lambda i: getmodifieddate(myinput_path))
 input("press any key to exit")
